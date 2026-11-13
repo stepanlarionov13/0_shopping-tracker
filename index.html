@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Мой Чек — Трекер покупок и корзины</title>
+  
+  <!-- Apple iOS Web App Meta -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Мой Чек">
+  <meta name="theme-color" content="#4f46e5">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="h-full text-slate-800 antialiased flex flex-col font-sans select-none sm:select-auto">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 pt-safe shadow-sm">
+    <div class="max-w-xl sm:max-w-2xl mx-auto px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-3">
+      <!-- Left: Logo & App Title -->
+      <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 shrink-0">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+        </div>
+        <div class="truncate">
+          <h1 id="appTitle" class="font-bold text-slate-900 text-base sm:text-lg leading-tight truncate">Мой Чек</h1>
+          <p id="appSubtitle" class="text-[11px] sm:text-xs text-slate-500 font-medium truncate">Контроль расходов в магазине</p>
+        </div>
+      </div>
+
+      <!-- Right: Language Selector (Flags) + Currency Selector -->
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        
+        <!-- Language Selector (Flags: Russian, English, Montenegrin) -->
+        <div class="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-xl border border-slate-200" id="langSelector" role="group" aria-label="Language selector">
+          <button 
+            type="button" 
+            class="lang-btn px-1.5 py-1 rounded-lg text-sm sm:text-base leading-none transition hover:bg-slate-200/60 active:scale-95" 
+            data-lang="ru" 
+            title="Русский"
+          >
+            🇷🇺
+          </button>
+          <button 
+            type="button" 
+            class="lang-btn px-1.5 py-1 rounded-lg text-sm sm:text-base leading-none transition hover:bg-slate-200/60 active:scale-95" 
+            data-lang="en" 
+            title="English"
+          >
+            🇬🇧
+          </button>
+          <button 
+            type="button" 
+            class="lang-btn px-1.5 py-1 rounded-lg text-sm sm:text-base leading-none transition hover:bg-slate-200/60 active:scale-95" 
+            data-lang="me" 
+            title="Crnogorski"
+          >
+            🇲🇪
+          </button>
+        </div>
+
+        <!-- Currency Selector -->
+        <div class="flex items-center gap-1 bg-slate-100 p-0.5 sm:p-1 rounded-xl border border-slate-200">
+          <label for="currencySelect" id="currencyLabel" class="text-xs font-semibold text-slate-500 pl-1 hidden md:inline">Валюта:</label>
+          <select id="currencySelect" class="bg-white text-slate-800 font-bold text-xs sm:text-sm py-1 px-1.5 sm:px-2 rounded-lg border-0 shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+            <option value="₽">₽ (Рубль)</option>
+            <option value="$">$ (Доллар)</option>
+            <option value="€">€ (Евро)</option>
+            <option value="¥">¥ (Юань)</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Scrollable Area -->
+  <main class="flex-1 overflow-y-auto max-w-xl sm:max-w-2xl w-full mx-auto px-4 py-4 space-y-4 pb-36">
+
+    <!-- Top Action / Form Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <!-- Tabs: Plan vs In-Store Quick Add -->
+      <div class="flex border-b border-slate-200 bg-slate-50/70 p-1.5 gap-1.5 text-sm font-semibold">
+        <button id="tabPlanBtn" type="button" class="flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 bg-white text-indigo-700 shadow-sm">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
+          <span id="tabPlanBtnText">Запланировать</span>
+        </button>
+        <button id="tabStoreBtn" type="button" class="flex-1 py-2 px-3 rounded-xl transition text-center flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          <span id="tabStoreBtnText">Вне плана в магазине</span>
+        </button>
+      </div>
+
+      <!-- Form: Pre-shopping Planning -->
+      <form id="planForm" class="p-4 space-y-3">
+        <div>
+          <label id="planNameLabel" class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Что купить?</label>
+          <input 
+            type="text" 
+            id="planName" 
+            placeholder="Например: Молоко, Яблоки, Сыр..." 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none text-slate-800 placeholder-slate-400 bg-slate-50/50 focus:bg-white text-base"
+            required
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label id="planQtyLabel" class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Количество / Вес</label>
+            <div class="flex items-center">
+              <input 
+                type="text" 
+                inputmode="decimal" 
+                id="planQuantity" 
+                value="1" 
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none text-slate-800 font-semibold text-base"
+                required
+              >
+            </div>
+          </div>
+          <div>
+            <label id="planUnitLabel" class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Ед. измерения</label>
+            <select 
+              id="planUnit" 
+              class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none text-slate-800 font-semibold bg-white text-base"
+            >
+              <option value="шт">шт (штуки)</option>
+              <option value="кг">кг (килограммы)</option>
+              <option value="г">г (граммы)</option>
+              <option value="л">л (литры)</option>
+              <option value="упак">упак (упаковки)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Quick tag suggestions -->
+        <div class="flex items-center gap-1.5 flex-wrap pt-1 text-xs">
+          <span id="quickLabel" class="text-slate-400">Быстро:</span>
+          <div id="quickChipsContainer" class="flex items-center gap-1.5 flex-wrap">
+            <button type="button" class="quick-chip bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full" data-name="Хлеб" data-unit="шт">Хлеб</button>
+            <button type="button" class="quick-chip bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full" data-name="Молоко" data-unit="л">Молоко</button>
+            <button type="button" class="quick-chip bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full" data-name="Яйца (10 шт)" data-unit="упак">Яйца</button>
+            <button type="button" class="quick-chip bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full" data-name="Бананы" data-unit="кг">Бананы</button>
+            <button type="button" class="quick-chip bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full" data-name="Сыр" data-unit="г" data-qty="300">Сыр</button>
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold rounded-xl shadow-md shadow-indigo-100 transition flex items-center justify-center gap-2 text-base"
+        >
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+          </svg>
+          <span id="btnPlanSubmitText">Добавить в список</span>
+        </button>
+      </form>
+
+      <!-- Form: On-the-fly In-Store Add (Hidden by default) -->
+      <form id="storeForm" class="p-4 space-y-3.5 hidden bg-emerald-50/30">
+        <div class="flex items-center justify-between">
+          <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="storeBadgeText">Сразу отправляется в корзину</span>
+          </span>
+        </div>
+
+        <div>
+          <label id="storeNameLabel" class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Название товара</label>
+          <input 
+            type="text" 
+            id="storeName" 
+            placeholder="Что берете? Например: Шоколад, Вода..." 
+            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-slate-800 placeholder-slate-400 bg-white text-base"
+            required
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label id="storeQtyLabel" class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Кол-во / Вес</label>
+            <input 
+              type="text" 
+              inputmode="decimal" 
+              id="storeQuantity" 
+              value="1" 
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-slate-800 font-semibold text-base"
+              required
+            >
+          </div>
+          <div>
+            <label id="storeUnitLabel" class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Ед. измерения</label>
+            <select 
+              id="storeUnit" 
+              class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-slate-800 font-semibold bg-white text-base"
+            >
+              <option value="шт">шт (штуки)</option>
+              <option value="кг">кг (килограммы)</option>
+              <option value="г">г (граммы)</option>
+              <option value="л">л (литры)</option>
+              <option value="упак">упак (упаковки)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Price & Mode for In-Store -->
+        <div class="p-3 bg-white rounded-xl border border-emerald-200/80 shadow-sm space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <label id="storePriceLabel" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Цена на ценнике/этикетке</label>
+            <span class="active-currency-symbol text-sm font-bold text-emerald-700">₽</span>
+          </div>
+
+          <div class="relative">
+            <input 
+              type="text" 
+              inputmode="decimal" 
+              id="storePrice" 
+              placeholder="0.00" 
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none text-slate-900 font-bold text-lg text-base"
+              required
+            >
+          </div>
+
+          <!-- Segmented Toggle Mode for In-Store -->
+          <div class="pt-1">
+            <label id="storeCalcModeLabel" class="block text-[11px] font-semibold text-slate-500 mb-1">Режим расчета стоимости:</label>
+            <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl">
+              <button 
+                type="button" 
+                id="storeModeUnit" 
+                class="py-2 px-2 text-xs font-bold rounded-lg transition text-center shadow-sm bg-white text-emerald-700"
+              >
+                За 1 ед. (× кол-во)
+              </button>
+              <button 
+                type="button" 
+                id="storeModeTotal" 
+                class="py-2 px-2 text-xs font-bold rounded-lg transition text-center text-slate-600 hover:text-slate-900"
+              >
+                За всё (наклейка)
+              </button>
+            </div>
+            <p id="storeModeHint" class="text-[11px] text-slate-400 mt-1 italic">
+              Умножит цену на количество
+            </p>
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold rounded-xl shadow-md shadow-emerald-100 transition flex items-center justify-center gap-2 text-base"
+        >
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <span id="btnStoreSubmitText">В корзину и посчитать</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Controls Bar: Filters & Reset Actions -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 flex-wrap">
+      <!-- Filter Tabs -->
+      <div class="flex bg-slate-200/80 p-1 rounded-xl gap-1 text-xs font-semibold shrink-0">
+        <button id="filterAll" type="button" class="filter-btn whitespace-nowrap flex-1 sm:flex-none py-1.5 px-3 rounded-lg bg-white text-slate-900 shadow-sm transition">
+          <span id="filterAllText">Все</span> (<span id="countAll">0</span>)
+        </button>
+        <button id="filterPending" type="button" class="filter-btn whitespace-nowrap flex-1 sm:flex-none py-1.5 px-3 rounded-lg text-slate-600 hover:text-slate-900 transition">
+          <span id="filterPendingText">Надо купить</span> (<span id="countPending">0</span>)
+        </button>
+        <button id="filterInCart" type="button" class="filter-btn whitespace-nowrap flex-1 sm:flex-none py-1.5 px-3 rounded-lg text-slate-600 hover:text-slate-900 transition">
+          <span id="filterInCartText">В корзине</span> (<span id="countInCart">0</span>)
+        </button>
+      </div>
+
+      <!-- Quick Actions Buttons -->
+      <div class="flex items-center justify-end gap-1.5 shrink-0">
+        <button 
+          id="btnResetChecks" 
+          type="button" 
+          class="whitespace-nowrap text-xs font-semibold py-1.5 px-2.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 active:bg-amber-200 transition flex items-center gap-1.5"
+          title="Сбросить отметки и цены для повторного похода"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span id="btnResetChecksText">Сбросить цены</span>
+        </button>
+
+        <button 
+          id="btnClearAll" 
+          type="button" 
+          class="whitespace-nowrap text-xs font-semibold py-1.5 px-2.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 active:bg-rose-200 transition flex items-center gap-1.5"
+          title="Полностью очистить список"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span id="btnClearAllText">Очистить всё</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Items List Container -->
+    <div id="itemsContainer" class="space-y-3">
+      <!-- Items rendered via JavaScript -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="hidden bg-white border border-dashed border-slate-300 rounded-2xl p-8 text-center space-y-3">
+      <div class="w-14 h-14 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mx-auto">
+        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      </div>
+      <div>
+        <h3 id="emptyTitle" class="font-bold text-slate-800 text-base">Список покупок пуст</h3>
+        <p id="emptyDesc" class="text-sm text-slate-500 max-w-xs mx-auto mt-1">Добавьте нужные товары заранее или внесите прямо в торговом зале</p>
+      </div>
+      <button id="btnLoadSample" type="button" class="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 py-2 px-3.5 rounded-xl transition">
+        <span id="btnLoadSampleText">Загрузить пример списка</span>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Real-time Sticky Bottom Summary Bar -->
+  <aside class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shadow-[0_-8px_25px_rgba(0,0,0,0.08)] pb-safe">
+    <div class="max-w-xl sm:max-w-2xl mx-auto px-4 py-3">
+      
+      <!-- Progress Bar -->
+      <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2.5">
+        <div id="progressBar" class="bg-indigo-600 h-full w-0 transition-all duration-300 ease-out"></div>
+      </div>
+
+      <div class="flex items-center justify-between gap-3">
+        <!-- Counters & Status -->
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1 text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+              <span id="summaryCartBadge" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span id="summaryCartBadgeLabel">В корзине:</span> <span id="summaryCartRatio" class="font-black text-slate-900">0 из 0</span>
+            </span>
+            <span id="summaryPercent" class="text-xs font-semibold text-slate-400">0%</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-0.5">
+            <span id="summaryPendingLabel">Осталось взять:</span> <span id="summaryPendingCount" class="font-semibold text-slate-600">0</span>
+          </div>
+        </div>
+
+        <!-- Total Price Display -->
+        <div class="text-right">
+          <div id="summaryTotalLabel" class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Итого к оплате</div>
+          <div class="flex items-baseline justify-end gap-1 text-indigo-700">
+            <span id="summaryCartTotal" class="text-2xl sm:text-3xl font-black tracking-tight leading-none">0,00</span>
+            <span class="active-currency-symbol text-base sm:text-lg font-bold">₽</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4 transform transition-all">
+      <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <div class="text-center">
+        <h3 id="modalTitle" class="text-base font-bold text-slate-900">Подтвердите действие</h3>
+        <p id="modalDesc" class="text-sm text-slate-500 mt-1">Вы уверены?</p>
+      </div>
+      <div class="flex gap-2">
+        <button id="modalCancelBtn" type="button" class="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition text-sm">
+          Отмена
+        </button>
+        <button id="modalConfirmBtn" type="button" class="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 font-bold text-white shadow-md shadow-rose-100 transition text-sm">
+          Да, подтверждаю
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

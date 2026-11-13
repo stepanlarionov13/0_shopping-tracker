@@ -1,0 +1,144 @@
+/* Mobile-first and iOS Safari optimizations */
+
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  touch-action: manipulation;
+}
+
+/* Safe area insets support */
+.pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem));
+}
+
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));
+}
+
+/* 
+  Crucial for iPhone Safari:
+  Only editable form controls (inputs, selects, textareas) must be at least 16px font-size 
+  to prevent automatic zooming on focus. Buttons should respect their designed font sizes.
+*/
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Custom checkbox styling for easy finger tapping */
+.custom-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 2px solid #cbd5e1;
+  outline: none;
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+  transition: all 0.15s ease-in-out;
+  background-color: #ffffff;
+  flex-shrink: 0;
+}
+
+.custom-checkbox:hover {
+  border-color: #6366f1;
+}
+
+.custom-checkbox:checked {
+  background-color: #10b981;
+  border-color: #10b981;
+}
+
+.custom-checkbox:checked::before {
+  content: "";
+  width: 12px;
+  height: 8px;
+  border-left: 2.5px solid white;
+  border-bottom: 2.5px solid white;
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+/* Hide native number input spinners for clean sleek inputs */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Card checked state styles */
+.item-card.is-in-cart {
+  border-color: #a7f3d0;
+  background-color: #f0fdf4;
+}
+
+.item-card.is-in-cart .item-title {
+  color: #047857;
+  text-decoration: line-through;
+  text-decoration-color: #10b981;
+}
+
+/* Segmented thumb toggles */
+.mode-toggle-btn.active {
+  background-color: #ffffff;
+  color: #1e293b;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  font-weight: 700;
+}
+
+/* Language selector flag buttons */
+.lang-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lang-btn.active {
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 1px 2px -1px rgba(0, 0, 0, 0.08);
+  transform: scale(1.08);
+}
+
+/* Smooth transitions */
+.transition-card {
+  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.2s ease, opacity 0.2s ease;
+  animation: cardFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0.7;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
